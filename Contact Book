@@ -1,0 +1,239 @@
+from tkinter import *
+from tkinter import ttk
+import csv
+from tkinter import messagebox
+det=[]
+contact=Tk()
+contact.title("contact book")
+contact.geometry('486x400')
+
+def view():
+    data=[]
+    with open('bbn.csv', 'r', newline='') as file:
+        read = csv.reader(file)
+        for row in read:
+            data.append(row)
+        return data
+
+
+frame_title=Frame(contact,bg='black',height=50,width=500)
+frame_title.place(x=0,y=0)
+label=Label(frame_title,text='contact book',font=('Arial',24),width=25,bg='pink')
+label.place(x=0,y=0)
+
+frame_table=Frame(contact,bg='black',width=500,height=200)
+frame_table.place(x=0,y=168)
+
+def show():
+    global book
+    global det
+    headings=['','','','']
+    details=view()
+    book=ttk.Treeview(frame_table,columns=headings,show='headings')
+    vsb=ttk.Scrollbar(frame_table,orient='vertical',command=book.yview)
+    hsb=ttk.Scrollbar(frame_table,orient='horizontal',command=book.xview)
+    book.configure(yscrollcommand=vsb.set,xscrollcommand=hsb.set)
+    vsb.grid(row=0,column=1,sticky='ns')
+    hsb.grid(row=1,column=0,sticky='ew')
+
+    book.grid(row=0,column=0)
+
+    book.column(0,width=120)
+    book.column(1,width=120)
+    book.column(2,width=120)
+    book.column(3,width=120)
+
+    book.heading(0,text='Name')
+    book.heading(1,text='Number')
+    book.heading(2,text='Gender')
+    book.heading(3,text='Email')
+
+    for i in details:
+        book.insert('','end',values=i)
+show()
+
+
+def update(i):
+    def update_newlist(j):
+        with open('bbn.csv','w',newline='') as file:
+            writer=csv.writer(file)
+            writer.writerows(j)
+    new_list=[]
+    telephone=i[0]
+    with open('bbn.csv','r') as file:
+        reader=csv.reader(file)
+        for row in reader:
+            new_list.append(row)
+            #print(new_list)
+            for element in row:
+                if element==telephone:
+                    name=i[1]
+                    telephone=i[2]
+                    gender=i[3]
+                    email=i[4]
+                    data=[name,telephone,gender,email]
+                    index=new_list.index(row)
+                    #print(index)
+                    #print(new_list[index])
+                    new_list[index]=data
+
+    update_newlist(new_list)
+    entry_name.delete(0, END)
+    entry_number.delete(0, END)
+    entry_gender.delete(0, END)
+    entry_email.delete(0, END)
+def to_update():
+    book_data = book.focus()
+    if book_data=='':
+        messagebox.showwarning(title='warning',message='select to remove')
+    else:
+        book_dict = book.item(book_data)
+        book_values = book_dict['values']
+        Name=str(book_values[0])
+        Telephone = str(book_values[1])
+        Gender=str(book_values[2])
+        Email=str(book_values[3])
+
+        entry_name.insert(0,Name)
+        entry_number.insert(0, Telephone)
+        entry_gender.insert(0, Gender)
+        entry_email.insert(0, Email)
+        def confirm():
+            new_name = entry_name.get()
+            new_number = entry_number.get()
+            new_gender = entry_gender.get()
+            new_email = entry_email.get()
+            updated_list = [new_number,new_name, new_number, new_gender, new_email]
+            update(updated_list)
+            messagebox.showinfo(title='completed', message='data updated successfully')
+            for widget in frame_table.winfo_children():
+                widget.destroy()
+                button_confirm.destroy()
+            show()
+        button_confirm = Button(frame_details, text='CONFIRM', command=confirm)
+        button_confirm.place(x=310,y=80)
+
+
+def search(i):
+    new_list=[]
+    number=i
+    with open('bbn.csv','r') as file:
+        reader=csv.reader(file)
+        for row in reader:
+            for element in row:
+                if element==number:
+                    new_list.append(row)
+    return new_list
+
+def to_search():
+    telephone=entry.get()
+    if telephone=='':
+        messagebox.showwarning(title='warning',message='select to remove')
+    else:
+        data=search(telephone)
+        if data==[]:
+            messagebox.showwarning(title='warning',message='NOT FOUND!')
+        def delete_command():
+            book.delete(*book.get_children())
+        delete_command()
+    #delete_command()
+        for item in data:
+            book.insert('','end',values=item)
+def add():
+    global det
+    Name=entry_name.get()
+    Number=entry_number.get()
+    Gender=entry_gender.get()
+    Email=entry_email.get()
+    if Name=='' or Number=='' or Gender=='' or Email=='':
+        messagebox.showwarning(title='warning',message='fill the details completely')
+    else:
+        det=[Name,Number,Gender,Email]
+        with open('bbn.csv','a+',newline='') as file:
+            write=csv.writer(file)
+            write.writerow(det)
+        messagebox.showinfo(title='completed', message='data added successfully')
+    entry_name.delete(0,END)
+    entry_number.delete(0,END)
+    entry_gender.delete(0,END)
+    entry_email.delete(0,END)
+
+    show()
+def delete(i):
+    def save(new_det):
+        with open('bbn.csv', 'w',newline='') as file:
+            write = csv.writer(file)
+            write.writerows(new_det)
+    new_list=[]
+    tele=i
+
+    with open('bbn.csv','r') as file:
+        read=csv.reader(file)
+        for row in read:
+            new_list.append(row)
+            for element in row:
+                if element==tele:
+                    new_list.remove(row)
+    save(new_list)
+    messagebox.showinfo(title='completed',message='data deleted successfully')
+    for widget in frame_table.winfo_children():
+        widget.destroy()
+    show()
+
+def to_remove():
+    book_data = book.focus()
+    if book_data=='':
+        messagebox.showwarning(title='warning',message='select to remove')
+    else:
+        book_dict = book.item(book_data)
+        book_values = book_dict['values']
+        Telephone = str(book_values[1])
+    #print(Telephone)
+        delete(Telephone)
+
+frame_details=Frame(contact,bg='black',height=115,width=500)
+frame_details.place(x=0,y=50)
+
+label_name=Label(frame_details,text='NAME',bg='light green')
+label_name.place(x=0,y=0)
+entry_name=Entry(frame_details,font=('Arial',10))
+entry_name.place(x=60,y=1)
+
+label_number=Label(frame_details,text='NUMBER',bg='light green')
+label_number.place(x=0,y=30)
+entry_number=Entry(frame_details,font=('Arial',10))
+entry_number.place(x=60,y=30)
+
+label_gender=Label(frame_details,text='GENDER',bg='light green')
+label_gender.place(x=0,y=60)
+entry_gender=ttk.Combobox(frame_details,width=20)
+entry_gender['values']=['','F','M']
+#entry_gender=Entry(frame_details,font=('Arial',10))
+entry_gender.place(x=60,y=60)
+
+label_email=Label(frame_details,text='Email',bg='light green')
+label_email.place(x=0,y=90)
+entry_email=Entry(frame_details,font=('Arial',10))
+entry_email.place(x=60,y=90)
+
+button_search=Button(frame_details,text='SEARCH',command=to_search,bg='yellow')
+button_search.place(x=250,y=0)
+entry=Entry(frame_details,font=('Arial',13))
+entry.place(x=310,y=0)
+
+button_add=Button(frame_details,text='ADD',command=add,bg='light blue',width=5)
+button_add.place(x=400,y=55)
+
+button_delete=Button(frame_details,text='DELETE',command=to_remove,bg='light blue')
+button_delete.place(x=310,y=40)
+
+button_update=Button(frame_details,text='UPDATE',command=to_update,bg='light blue')
+button_update.place(x=310,y=80)
+
+#button_view=Button(frame_details,text='VIEW',command=view)
+#button_view.place(x=250,y=120)
+
+
+
+
+contact.mainloop()
